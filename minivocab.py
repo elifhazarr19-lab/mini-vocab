@@ -1,67 +1,93 @@
 """
-mini-vocab v0 — Basitlestirilmis implementasyon
-Ogrenci: Elif Hazar(251478082)
-
-Kapsam: Sadece init ve add komutlari.
-Sinirlamalar: Dongu ve liste henuz kullanilmadi.
-  - list komutu sadece dosya icerigini yazdiriyor (formatsiz)
-  - learn/delete henuz implemente edilmedi
+mini-vocab v1 — Döngüler eklendi + Bonus Yapay Zeka Komutu
+Ogrenci: Elif Haazar (251478082)
 """
 import sys
 import os
 
 def initialize():
-    """minivocab dizini ve bos words.dat dosyasini olusturur."""
     if os.path.exists(".minivocab"):
-        return "Already initialized"
-    
+        return "Zaten baslatildi (Already initialized)"
     os.mkdir(".minivocab")
     f = open(".minivocab/words.dat", "w")
     f.close()
-    return "Initialized empty minivocab in .minivocab/"
+    return "minivocab basariyla baslatildi."
 
 def add_word(word, translation):
-    """Yeni kelime ekler. ID tespiti dongusuz, dosyadaki satir sayisi ile yapilir."""
     if not os.path.exists(".minivocab"):
-        return "Not initialized. Run: python minivocab.py init"
-    
-    # Dosyayi okuma modunda acip icerigi aliyoruz
+        return "HATA: Once projeyi baslatin. Komut: python minivocab.py init"
     f = open(".minivocab/words.dat", "r")
     content = f.read()
     f.close()
-    
-    # Basit ID hesabi: dosyadaki satir (enter) sayisi + 1
     word_id = content.count("\n") + 1
-    
-    # Dosyayi ekleme (append) modunda aciyoruz
     f = open(".minivocab/words.dat", "a")
     f.write(str(word_id) + "|" + word + "|" + translation + "|LEARNING\n")
     f.close()
+    return "Eklendi #" + str(word_id) + ": " + word + " - " + translation
+
+def list_words():
+    if not os.path.exists(".minivocab/words.dat"):
+        return "Hic kelime bulunamadi."
+    f = open(".minivocab/words.dat", "r")
+    lines = f.readlines()
+    f.close()
+    if len(lines) == 0:
+        return "Hic kelime bulunamadi."
     
-    return "Added word #" + str(word_id) + ": " + word + " - " + translation
+    result = ""
+    for line in lines:
+        parts = line.strip().split("|")
+        if len(parts) == 4:
+            result += "[" + parts[0] + "] [" + parts[3] + "] " + parts[1] + " - " + parts[2] + "\n"
+    return result.strip()
+
+# --- BONUS: YAPAY ZEKA ILE URETILEN FONKSIYON ---
+def learn_word(word_id):
+    if not os.path.exists(".minivocab/words.dat"):
+        return "HATA: Dosya bulunamadi."
+    
+    f = open(".minivocab/words.dat", "r")
+    lines = f.readlines()
+    f.close()
+    
+    found = False
+    f = open(".minivocab/words.dat", "w")
+    for line in lines:
+        parts = line.strip().split("|")
+        # Eger satir bizim aradigimiz ID ise durumunu LEARNED yap
+        if len(parts) == 4 and parts[0] == str(word_id):
+            f.write(parts[0] + "|" + parts[1] + "|" + parts[2] + "|LEARNED\n")
+            found = True
+        else:
+            f.write(line)
+    f.close()
+    
+    if found:
+        return "Kelime #" + str(word_id) + " 'LEARNED' (Ogrenildi) olarak isaretlendi."
+    else:
+        return "Kelime #" + str(word_id) + " bulunamadi."
 
 def show_not_implemented(command_name):
-    """Henuz kodlanmamis komutlar icin bilgi mesaji dondurur."""
-    return "Command '" + command_name + "' will be implemented in future weeks."
+    return "Bu komut (" + command_name + ") ileriki haftalarda eklenecektir."
 
 # --- Ana Program ---
-# Not: sys.argv sistem tarafindan verilen argumanlardir. 
-# Yeni bir liste olusturulmamis, sadece arguman sayisina gore if-else yapilmistir.
-
 if len(sys.argv) < 2:
-    print("Usage: python minivocab.py <command> [args]")
+    print("HATA: Komut girmediniz! Kullanim: python minivocab.py <komut> [argumanlar]")
 elif sys.argv[1] == "init":
     print(initialize())
 elif sys.argv[1] == "add":
     if len(sys.argv) < 4:
-        print("Usage: python minivocab.py add <word> <translation>")
+        print("HATA: Eksik kelime. Kullanim: python minivocab.py add <kelime> <ceviri>")
     else:
         print(add_word(sys.argv[2], sys.argv[3]))
 elif sys.argv[1] == "list":
-    print(show_not_implemented("list"))
-elif sys.argv[1] == "learn":
-    print(show_not_implemented("learn"))
+    print(list_words())
+elif sys.argv[1] == "learn": # BONUS KISMI BURAYA EKLENDI
+    if len(sys.argv) < 3:
+        print("HATA: ID girmediniz. Kullanim: python minivocab.py learn <id>")
+    else:
+        print(learn_word(sys.argv[2]))
 elif sys.argv[1] == "delete":
     print(show_not_implemented("delete"))
 else:
-    print("Unknown command: " + sys.argv[1])
+    print("Bilinmeyen komut: " + sys.argv[1])
